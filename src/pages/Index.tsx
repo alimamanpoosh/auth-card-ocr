@@ -41,28 +41,43 @@ const Index = () => {
     }
 
     setIsProcessing(true);
-    
-    // Simulate OCR processing (replace with actual API call)
-    setTimeout(() => {
-      const mockText = `Sample OCR Results for ${selectedCardType}:
+    setOcrText("");
 
-Name: JOHN SMITH
-Date of Birth: 01/15/1990
-ID Number: 123456789
-Address: 123 Main Street, City, State 12345
-Issue Date: 03/15/2020
-Expiry Date: 03/15/2030
+    const formData = new FormData();
+    formData.append("file", selectedFile);
 
-Note: This is a demo result. In production, this would be replaced with actual OCR processing using your Python backend.`;
-      
-      setOcrText(mockText);
-      setIsProcessing(false);
-      
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "An error occurred during OCR processing.");
+      }
+
+      const data = await response.json();
+      setOcrText(data.text);
+
       toast({
         title: "OCR Complete!",
         description: "Text has been successfully extracted from your image.",
       });
-    }, 3000);
+    } catch (error) {
+      let errorMessage = "An unknown error occurred.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      toast({
+        title: "OCR Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const features = [
